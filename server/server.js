@@ -12,7 +12,12 @@ const superheroPowers = JSON.parse(fs.readFileSync(path.join(__dirname, 'superhe
 const apiRouterSuperhero = express.Router();
 
 // Serve front-end code
-apiRouterSuperhero.use(express.static('client', { index: 'superheros.html' }));
+app.use(express.static(__dirname + '/../client'));
+
+// Make sure to specify the default file
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/../client/index.html');
+});
 
 // Function for getting superhero powers (Item 2)
 function getSuperheroPowers(superheroID) {
@@ -98,6 +103,10 @@ apiRouterSuperhero.route('/:id') // All the routes to the base api/superhero pre
     .get((req, res) => {
         const superheroID = parseInt(req.params.id);
         const superhero = superheroInfo.find(hero => hero.id === superheroID);
+
+        // Inside your GET route for superhero information
+        console.log(`\nRequested superhero ID: ${superheroID}`);
+        console.log(`Superhero data:`, superhero);
 
         if (!superhero) {
             return res.status(404).json({ error: 'Superhero not found' });
