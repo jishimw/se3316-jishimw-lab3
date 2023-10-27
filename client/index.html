@@ -3,21 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Superheros</title>
+    <title>Superheroes</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
     <h1>Superhero Information</h1>
-
+    
+    <h2>Search Superheroes</h2>
+    <form>
+        <label for="searchField">Search Field:</label>
+        <select id="searchField">
+            <option value="name">Name</option>
+            <option value="race">Race</option>
+            <option value="publisher">Publisher</option>
+            <option value="power">Power</option>
+        </select>
+        <label for="searchPattern">Search Pattern:</label>
+        <input type="text" id="searchPattern">
+        <label for="searchLimit">Result Limit:</label>
+        <input type="number" id="searchLimit">
+        <button id="searchSuperheroes">Search</button>
+    </form>
+    <div id="searchResults" class="results-container"></div>
+    
+    <h2>Superhero Information</h2>
     <label for="superheroId">Enter Superhero ID:</label>
     <input type="text" id="superheroId">
     <button id="getSuperheroInfo">Get Superhero Info</button>
-    <div id="superheroInfo"></div>
-
-    <label for="superheroIdPowers">Enter Superhero ID for Powers:</label>
+    <div id="superheroInfo" class="results-container"></div>
+    
+    <h2>Superhero Powers</h2>
+    <label for="superheroIdPowers">Enter Superhero ID:</label>
     <input type="text" id="superheroIdPowers">
     <button id="getSuperheroPowers">Get Superhero Powers</button>
-    <div id="superheroPowers"></div>
-
+    <div id="superheroPowers" class="results-container"></div>
+    
+    <h2>Publishers</h2>
+    <button id="getPublishers">Get All Publishers</button>
+    <div id="publishersResults" class="results-container"></div>
     <script defer src="script.js"></script>
 </body>
 </html>
