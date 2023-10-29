@@ -24,7 +24,7 @@ function getSuperheroPowers(superheroID) {
     const superheroInfoItem = superheroInfo.find(hero => hero.id === superheroID);
 
     if (!superheroInfoItem) {
-        return null;
+        return ['Superhero not found'];
     }
 
     const superheroInfoName = superheroInfoItem.name;
@@ -33,7 +33,7 @@ function getSuperheroPowers(superheroID) {
     );
 
     if (!superheroPowersItem) {
-        return [];
+        return ['Superhero has no powers'];
     }
 
     // Extract powers from the object where the value is "True"
@@ -52,8 +52,9 @@ function getAllPublisherNames() {
     return filteredPublisherNames;
 }
 
-// Function for searching superheroes (Item 4)
 function searchSuperheroes(field, pattern, n) {
+    console.log('Search parameters:', field, pattern, n);
+
     // Check if required parameters are provided
     if (!field || !pattern) {
         return [];
@@ -66,20 +67,32 @@ function searchSuperheroes(field, pattern, n) {
         matchingSuperheroIDs = superheroInfo
             .filter(hero => hero.name.toLowerCase().includes(pattern.toLowerCase()))
             .map(hero => hero.id);
-    }
-
-    // Search by superhero race
-    if (field === 'race') {
+    } else if (field === 'race') {  // Search by superhero race
         matchingSuperheroIDs = superheroInfo
-            .filter(hero => hero.race.toLowerCase().includes(pattern.toLowerCase()))
+            .filter(hero => hero.race && hero.race !== '-' && hero.race.toLowerCase().includes(pattern.toLowerCase()))
             .map(hero => hero.id);
-    }
 
-    // Search by publisher
-    if (field === 'publisher') {
+        if (matchingSuperheroIDs.length === 0) {
+            return ['No matching superheroes found for this race.'];
+        }
+    } else if (field === 'publisher') { // Search by publisher
         matchingSuperheroIDs = superheroInfo
             .filter(hero => hero.Publisher.toLowerCase().includes(pattern.toLowerCase()))
             .map(hero => hero.id);
+    } else if (field === 'power') { // Search by power
+        const powersToSearch = pattern.toLowerCase();
+        matchingSuperheroIDs = superheroInfo
+            .filter(hero => {
+                const superheroName = hero.name.toLowerCase();
+                return superheroPowers.some(power => {
+                    return power.hero_names.toLowerCase() === superheroName && power[powersToSearch] === 'True';
+                });
+            })
+            .map(hero => hero.id);
+
+        if (matchingSuperheroIDs.length === 0) {
+            return ['No matching superheroes found for this power.'];
+        }
     }
 
     // Limit the number of results if 'n' is provided
@@ -89,6 +102,7 @@ function searchSuperheroes(field, pattern, n) {
 
     return matchingSuperheroIDs;
 }
+
 
 // Middleware for logging
 apiRouterSuperhero.use((req, res, next) => {
@@ -138,27 +152,30 @@ app.get('/api/superhero/publishers', (req, res) => {
     res.json(publisherNames);
 });
 
-// Create a route for searching superheroes
+
+// Define a route to search superheroes by field and pattern
 app.get('/api/superhero/search', (req, res) => {
-    const field = req.query.field;
-    const pattern = req.query.pattern;
-    const n = req.query.n;
-    const matchingSuperheroIDs = searchSuperheroes(field, pattern, n);
+    const field = req.query.field; // Get the search field from the query parameters
+    const pattern = req.query.pattern; // Get the search pattern from the query parameters
+    const n = req.query.n; // Get the limit from the query parameters
 
-    res.json(matchingSuperheroIDs);
-});
-
-// Define a route to get all available publisher names outside apiRouterSuperhero
-app.get('/api/publishers', (req, res) => {
-    const publisherNames = [...new Set(superheroInfo.map(hero => hero.Publisher))];
-    const filteredPublisherNames = publisherNames.filter(name => name !== '');
-
-    if (!filteredPublisherNames || filteredPublisherNames.length === 0) {
-        return res.status(404).json({ error: 'No publisher names found' });
+    if (!field || !pattern) {
+        return res.status(400).json({ error: 'Both field and pattern are required' });
     }
 
-    res.json(filteredPublisherNames);
+    const matchingSuperheroIDs = searchSuperheroes(field, pattern, n);
+
+    if (matchingSuperheroIDs.length === 0) {
+        return res.status(404).json({ error: 'No matching superheroes found' });
+    }
+
+    const matchingSuperheroes = matchingSuperheroIDs.map(superheroID => {
+        return superheroInfo.find(hero => hero.id === superheroID);
+    });
+
+    res.json(matchingSuperheroes);
 });
+
 
 // Mount the apiRouterSuperhero router at the 'http://localhost:3000/api/superhero' path
 app.use('/api/superhero', apiRouterSuperhero);
