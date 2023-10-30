@@ -41,6 +41,34 @@
     <h2>Publishers</h2>
     <button id="getPublishers">Get All Publishers</button>
     <div id="publishersResults" class="results-container"></div>
+
+    <!-- Create a new favorite list -->
+    <h2>Create a New Favorite List</h2>
+    <label for="listName">List Name:</label>
+    <input type="text" id="listName">
+    <button id="createFavoriteList">Create List</button>
+
+    <!-- Save superhero IDs to a favorite list -->
+    <h2>Save Superheroes to a Favorite List</h2>
+    <label for="listNameToSave">List Name:</label>
+    <input type="text" id="listNameToSave">
+    <label for="superheroIDsToSave">Superhero IDs (comma-separated):</label>
+    <input type="text" id="superheroIDsToSave">
+    <button id="saveToFavoriteList">Save</button>
+
+    <!-- Retrieve superhero IDs from a favorite list -->
+    <h2>Retrieve Superheroes from a Favorite List</h2>
+    <label for="listNameToRetrieve">List Name:</label>
+    <input type="text" id="listNameToRetrieve">
+    <button id="retrieveFromFavoriteList">Retrieve</button>
+    <div id="favoriteListInfo" class="results-container"></div>
+
+    <!-- Delete a favorite list -->
+    <h2>Delete a Favorite List</h2>
+    <label for="listNameToDelete">List Name:</label>
+    <input type="text" id="listNameToDelete">
+    <button id="deleteFavoriteList">Delete List</button>
+
     <script defer src="script.js"></script>
 </body>
 </html>

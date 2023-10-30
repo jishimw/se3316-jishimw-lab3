@@ -2,11 +2,15 @@ const express = require('express');
 const app = express();
 const port = process.env.PORT || 3000;
 const fs = require('fs');
+const { type } = require('os');
 const path = require('path'); // Import the path module
 
 // Read the superhero data JSON files and assign as objects
 const superheroInfo = JSON.parse(fs.readFileSync(path.join(__dirname, 'superhero_info.json')));
 const superheroPowers = JSON.parse(fs.readFileSync(path.join(__dirname, 'superhero_powers.json')));
+
+// Add this line before defining your API routes
+app.use(express.json());
 
 // Define a router for your API routes
 const apiRouterSuperhero = express.Router();
@@ -69,9 +73,8 @@ function searchSuperheroes(field, pattern, n) {
             .map(hero => hero.id);
     } else if (field === 'race') {  // Search by superhero race
         matchingSuperheroIDs = superheroInfo
-            .filter(hero => hero.race && hero.race !== '-' && hero.race.toLowerCase().includes(pattern.toLowerCase()))
+            .filter(hero => hero.Race && hero.Race !== '-' && hero.Race.toLowerCase().includes(pattern.toLowerCase()))
             .map(hero => hero.id);
-
         if (matchingSuperheroIDs.length === 0) {
             return ['No matching superheroes found for this race.'];
         }
@@ -81,14 +84,22 @@ function searchSuperheroes(field, pattern, n) {
             .map(hero => hero.id);
     } else if (field === 'power') { // Search by power
         const powersToSearch = pattern.toLowerCase();
-        matchingSuperheroIDs = superheroInfo
-            .filter(hero => {
-                const superheroName = hero.name.toLowerCase();
-                return superheroPowers.some(power => {
-                    return power.hero_names.toLowerCase() === superheroName && power[powersToSearch] === 'True';
-                });
-            })
-            .map(hero => hero.id);
+
+        matchingSuperheroIDs = superheroPowers.filter(hero => {
+            const superheroName = hero.hero_names.toLowerCase();
+
+            // Extract powers from the object where the value is "True"
+            const powers = Object.keys(hero).filter(key => key !== 'hero_names' && hero[key] === 'True');
+            
+            // Check if any of the powers match the searched power
+            return powers.some(power => power.toLowerCase().includes(powersToSearch));
+        })
+        .map(hero => {
+            // Find the superhero ID based on the name
+            const superheroInfoItem = superheroInfo.find(info => info.name.toLowerCase() === hero.hero_names.toLowerCase());
+            return superheroInfoItem ? superheroInfoItem.id : null;
+        })
+        .filter(id => id !== null);
 
         if (matchingSuperheroIDs.length === 0) {
             return ['No matching superheroes found for this power.'];
@@ -102,7 +113,6 @@ function searchSuperheroes(field, pattern, n) {
 
     return matchingSuperheroIDs;
 }
-
 
 // Middleware for logging
 apiRouterSuperhero.use((req, res, next) => {
@@ -150,6 +160,119 @@ app.get('/api/superhero/publishers', (req, res) => {
     }
 
     res.json(publisherNames);
+});
+
+const favoriteSuperheroLists = {}; // Object to store favorite superhero lists
+
+// Create a new list with a given name (Item 5)
+app.post('/api/superhero/lists/create', (req, res) => {
+    const listName = req.body.name;
+
+    if (favoriteSuperheroLists[listName]) {
+        return res.status(400).json({ error: 'List name already exists.' });
+    }
+
+    favoriteSuperheroLists[listName] = [];
+    res.json({ message: 'List created successfully.' });
+});
+
+// Save a list of superhero IDs to a given list name (Item 6)
+app.put('/api/superhero/lists/save', (req, res) => {
+    const listName = req.body.name;
+    const superheroIDs = req.body.superheroIDs;
+
+    if (!favoriteSuperheroLists[listName]) {
+        return res.status(404).json({ error: 'List name does not exist.' });
+    }
+
+    favoriteSuperheroLists[listName] = superheroIDs;
+    res.json({ message: 'List saved successfully.' });
+});
+
+
+// Get the list of superhero IDs for a given list (Item 7)
+// Retrieve superhero IDs from a favorite list and display information (Item 9)
+app.get('/api/superhero/lists/get', (req, res) => {
+    const listName = req.query.name;
+
+    if (!favoriteSuperheroLists[listName]) {
+        return res.status(404).json({ error: 'List name does not exist.' });
+    }
+
+    const superheroIDs = favoriteSuperheroLists[listName];
+    const superheroesInList = [];
+
+    superheroIDs.forEach(superheroID => {
+
+        // Convert superheroID from a string to a number
+        superheroID = parseInt(superheroID);
+
+        console.log(`Searching for superhero with the ID: ${superheroID}`);
+
+        const superhero = superheroInfo.find(hero => hero.id === superheroID);
+
+        if (!superhero) {
+            // Handle the case where the superhero with the given ID is not found
+            superheroesInList.push({
+                id: superheroID,
+                name: "Superhero not found",
+                info: {
+                    gender: "[]",
+                    race: "[]",
+                    height: "[]",
+                    publisher: "[]",
+                    alignment: "[]",
+                    weight: "[]",
+                },
+                powers: ["No powers found"],
+            });
+        } else {
+            const powers = getSuperheroPowers(superheroID);
+            if (powers.length === 0) {
+                superheroesInList.push({
+                    id: superheroID,
+                    name: superhero.name,
+                    info: {
+                        gender: superhero.Gender,
+                        race: superhero.Race,
+                        height: superhero.Height,
+                        publisher: superhero.Publisher,
+                        alignment: superhero.Alignment,
+                        weight: superhero.Weight,
+                    },
+                    powers: ["No powers found"],
+                });
+            } else {
+                superheroesInList.push({
+                    id: superheroID,
+                    name: superhero.name,
+                    info: {
+                        gender: superhero.Gender,
+                        race: superhero.Race,
+                        height: superhero.Height,
+                        publisher: superhero.Publisher,
+                        alignment: superhero.Alignment,
+                        weight: superhero.Weight,
+                    },
+                    powers: powers,
+                });
+            }
+        }
+    });
+
+    res.json(superheroesInList);
+});
+
+// Delete a list of superheroes with a given name (Item 8)
+app.delete('/api/superhero/lists/delete', (req, res) => {
+    const listName = req.body.name;
+
+    if (!favoriteSuperheroLists[listName]) {
+        return res.status(404).json({ error: 'List name does not exist.' });
+    }
+
+    delete favoriteSuperheroLists[listName];
+    res.json({ message: 'List deleted successfully.' });
 });
 
 
