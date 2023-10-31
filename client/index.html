@@ -56,11 +56,18 @@
     <input type="text" id="superheroIDsToSave">
     <button id="saveToFavoriteList">Save</button>
 
-    <!-- Retrieve superhero IDs from a favorite list -->
-    <h2>Retrieve Superheroes from a Favorite List</h2>
+    <!-- Retrieve superhero IDs from a favorite list and sort the results-->
+    <h2>Retrieve & Sort Superheroes from a Favorite List</h2>
     <label for="listNameToRetrieve">List Name:</label>
     <input type="text" id="listNameToRetrieve">
-    <button id="retrieveFromFavoriteList">Retrieve</button>
+    <label for="sortOptions">Sort Options:</label>
+        <select id="sortField">
+            <option value="name">Name</option>
+            <option value="race">Race</option>
+            <option value="publisher">Publisher</option>
+            <option value="power">Power</option>
+        </select>
+    <button id="retrieveFromFavoriteList">Retrieve Sorted A-Z</button>
     <div id="favoriteListInfo" class="results-container"></div>
 
     <!-- Delete a favorite list -->

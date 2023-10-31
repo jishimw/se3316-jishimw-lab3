@@ -172,11 +172,11 @@ document.getElementById('saveToFavoriteList').addEventListener('click', async ()
 
 
 
-// Retrieve superhero IDs from a favorite list
+// Retrieve superhero IDs from a favorite list and sort the results
 document.getElementById('retrieveFromFavoriteList').addEventListener('click', async () => {
     const listName = document.getElementById('listNameToRetrieve').value;
+    const sortField = document.getElementById('sortField').value; // Get the selected sorting field
     document.getElementById('listNameToRetrieve').value = ''; // Clear the input field
-    const sortField = document.getElementById('sortOptions').value;
 
     favoriteListInfoDiv.innerHTML = ''; // Clear previous content
 
@@ -187,45 +187,49 @@ document.getElementById('retrieveFromFavoriteList').addEventListener('click', as
             throw new Error('Error retrieving the list.');
         }
 
-        const superheroesInList = await response.json();
+        let superheroesInList = await response.json();
+
         if (Array.isArray(superheroesInList)) {
-            if (sortField === 'name') {
-                superheroesInList.sort((a, b) => a.name.localeCompare(b.name));
-            } else if (sortField === 'race') {
-                superheroesInList.sort((a, b) => a.race.localeCompare(b.race));
-            } else if (sortField === 'publisher') {
-                superheroesInList.sort((a, b) => a.publisher.localeCompare(b.publisher));
-            } else if (sortField === 'power') {
-                superheroesInList.sort((a, b) => {
-                    const powersA = a.powers.join(', ').toLowerCase();
-                    const powersB = b.powers.join(', ').toLowerCase();
-                    return powersA.localeCompare(powersB);
-                });
+            // Sort the superheroes based on the selected sorting field
+            superheroesInList.sort((a, b) => {
+                // You can customize the sorting behavior for each field
+                if (sortField === 'name') {
+                    return a.name.localeCompare(b.name); // Sort alphabetically by name
+                } else if (sortField === 'race') {
+                    return a.info.race.localeCompare(b.info.race); // Sort alphabetically by race
+                } else if (sortField === 'publisher') {
+                    return a.info.publisher.localeCompare(b.info.publisher); // Sort alphabetically by publisher
+                } else if (sortField === 'power') {
+                    // Sort alphabetically by the first power
+                    const powerA = a.powers.length > 0 ? a.powers[0] : '';
+                    const powerB = b.powers.length > 0 ? b.powers[0] : '';
+                    return powerA.localeCompare(powerB);
+                }
+            });
 
-                favoriteListInfoDiv.innerHTML = `<h3>Sorted Superheroes in the list ${listName}:</h3>`;
+            favoriteListInfoDiv.innerHTML = `<h3>Sorted Superheroes in the list ${listName}:</h3>`;
 
-                superheroesInList.forEach(superhero => {
-                    const superheroItem = document.createElement('div');
-                    superheroItem.innerHTML = `<h4>ID: ${superhero.id}</h4>`;
-                    superheroItem.innerHTML += `<p>${superhero.name}</p>`;
-                    superheroItem.innerHTML += '<p>Superhero Info:</p>';
-                    for (const key in superhero.info) {
-                        superheroItem.innerHTML += `<p>${key}: ${superhero.info[key]}</p>`;
-                    }
-                    superheroItem.innerHTML += '<p><strong>Superhero Powers:</strong></p>';
-                    superheroItem.innerHTML += `<p><i>${superhero.powers.join(', ')}</i></p>`;
-                    favoriteListInfoDiv.appendChild(superheroItem);
-                });
-            } 
-            else if (superheroesInList.error) {
-                alert(superheroesInList.error);
-            }
+            superheroesInList.forEach(superhero => {
+                // Sort the powers alphabetically
+                superhero.powers.sort();
+            
+                const superheroItem = document.createElement('div');
+                superheroItem.innerHTML = `<h4>ID: ${superhero.id}</h4`;
+                superheroItem.innerHTML += `<p>name: ${superhero.name}</p`;
+                for (const key in superhero.info) {
+                    superheroItem.innerHTML += `<p>${key}: ${superhero.info[key]}</p>`;
+                }
+                superheroItem.innerHTML += `<p><strong>Superhero Powers:</strong> ${superhero.powers.join(', ')}</p>`;
+                favoriteListInfoDiv.appendChild(superheroItem);
+            });
+            
         }
     } catch (error) {
         console.error(error);
         alert('Error retrieving the list.' + error.message);
     }
 });
+
 
 
 
