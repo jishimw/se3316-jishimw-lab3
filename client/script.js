@@ -163,15 +163,6 @@ document.getElementById('saveToFavoriteList').addEventListener('click', async ()
 });
 
 
-
-
-
-
-
-
-
-
-
 // Retrieve superhero IDs from a favorite list and sort the results
 document.getElementById('retrieveFromFavoriteList').addEventListener('click', async () => {
     const listName = document.getElementById('listNameToRetrieve').value;
@@ -184,7 +175,8 @@ document.getElementById('retrieveFromFavoriteList').addEventListener('click', as
         const response = await fetch(`/api/superhero/lists/get?name=${listName}`);
         if (!response.ok) {
             console.error(`Error: ${response.status} - ${response.statusText}`);
-            throw new Error('Error retrieving the list.');
+            // If the user tries to retrieve a list that doesn't exist a message:
+            favoriteListInfoDiv.innerHTML = `Error retrieving the list. \nThis list '${listName}' does not exist.`;
         }
 
         let superheroesInList = await response.json();
@@ -231,17 +223,6 @@ document.getElementById('retrieveFromFavoriteList').addEventListener('click', as
 });
 
 
-
-
-
-
-
-
-
-
-
-
-
 // Delete a favorite list
 document.getElementById('deleteFavoriteList').addEventListener('click', async () => {
     const listNameToDelete = document.getElementById('listNameToDelete').value;
@@ -259,7 +240,7 @@ document.getElementById('deleteFavoriteList').addEventListener('click', async ()
         alert(data.message);
     } catch (error) {
         console.error(error);
-        alert('Error deleting the list.');
+        alert('Error deleting the list.\n' + error.message);
     }
 });
 
