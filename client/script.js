@@ -4,6 +4,14 @@ const searchResultsDiv = document.getElementById('searchResults');
 const publishersResultsDiv = document.getElementById('publishersResults');
 const favoriteListInfoDiv = document.getElementById('favoriteListInfo');
 
+// Sanitize and display content:    Utility function to encode user-generated content before inserting it into the DOM
+function displaySanitizedContent(element, content) {
+    element.innerHTML = ''; // Clear previous content
+    const container = document.createElement('div');
+    container.textContent = content;
+    element.appendChild(container);
+}
+
 document.getElementById('getSuperheroInfo').addEventListener('click', () => {
     const superheroId = document.getElementById('superheroId').value;
     superheroInfoDiv.innerHTML = ''; // Clear previous content
@@ -30,7 +38,7 @@ document.getElementById('getSuperheroInfo').addEventListener('click', () => {
         })
         .then(data => {
             if (data.error) {
-                superheroInfoDiv.innerHTML = data.error;
+                displaySanitizedContent(superheroInfoDiv, data.error);
             } else {
                 for (const key in data) {
                     const item = document.createElement('ul');
@@ -55,12 +63,12 @@ document.getElementById('getPublishers').addEventListener('click', () => {
         })
         .then(data => {
             if (data.error) {
-                publishersResultsDiv.innerHTML = data.error; // Use publishersResultsDiv
+                displaySanitizedContent(publishersResultsDiv, data.error);
             } else {
                 data.forEach(e => {
                     const item = document.createElement('ol');
                     item.appendChild(document.createTextNode(`\n${e}`));
-                    publishersResultsDiv.appendChild(item); // Use publishersResultsDiv
+                    publishersResultsDiv.appendChild(item);
                 });
             }
         })
@@ -96,7 +104,7 @@ document.getElementById('getSuperheroPowers').addEventListener('click', (event) 
         })
         .then(data => {
             if (Array.isArray(data) && data.length === 1 && typeof data[0] === 'string') {
-                superheroPowersDiv.innerHTML = data[0]; // Display the error message
+                displaySanitizedContent(superheroPowersDiv, data[0]);   // Display the error message
             } else {
                 data.forEach(e => {
                     const item = document.createElement('ul');
@@ -246,7 +254,7 @@ document.getElementById('searchSuperheroes').addEventListener('click', (event) =
         })
         .then(data => {
             if (data.error) {
-                searchResultsDiv.innerHTML = data.error;
+                displaySanitizedContent(searchResultsDiv, data.error);
             } else {
                 searchResultsDiv.innerHTML = '<h3>Superhero Info:</h3>';
                 if (Array.isArray(data)) {
