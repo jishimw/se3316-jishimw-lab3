@@ -8,11 +8,12 @@ const favoriteListInfoDiv = document.getElementById('favoriteListInfo');
 function displaySanitizedContent(element, content) {
     element.innerHTML = ''; // Clear previous content
     const container = document.createElement('div');
-    container.textContent = content;
+    //This will ensure that any language and special characters are displayed correctly in the browser.
+    container.textContent = content;    //textContent Automatically handles Unicode characters.
     element.appendChild(container);
 }
 
-document.getElementById('getSuperheroInfo').addEventListener('click', () => {
+document.getElementById('getSuperheroInfo').addEventListener('click', async() => {
     const superheroId = document.getElementById('superheroId').value;
     superheroInfoDiv.innerHTML = ''; // Clear previous content
 
@@ -29,61 +30,59 @@ document.getElementById('getSuperheroInfo').addEventListener('click', () => {
         return;
     }
 
-    fetch(`/api/superhero/${superheroId}`)
-        .then(response => {
-            if (!response.ok) {
-                console.error(`Error: ${response.status} - ${response.statusText}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.error) {
-                displaySanitizedContent(superheroInfoDiv, data.error);
-            } else {
-                for (const key in data) {
-                    const item = document.createElement('ul');
-                    item.textContent = `${key}: ${data[key]}`;
-                    superheroInfoDiv.appendChild(item);
-                }
-            }
-        })
-        .catch(error => {
-            console.error(error);
+    try {
+        const response = await fetch(`/api/superhero/${superheroId}`);
+        if (!response.ok) {
+            console.error(`Error: ${response.status} - ${response.statusText}`);
             superheroInfoDiv.innerHTML = 'Superhero not found';
-        });
+            return;
+        }
+
+        const data = await response.json();
+        if (data.error) {
+            displaySanitizedContent(superheroInfoDiv, data.error);
+        } else {
+            for (const key in data) {
+                const item = document.createElement('ul');
+                item.textContent = `${key}: ${data[key]}`;
+                superheroInfoDiv.appendChild(item);
+            }
+        }
+    } catch (error) {
+        console.error(error);
+        superheroInfoDiv.innerHTML = 'An error occurred.';
+    }
 });
 
-document.getElementById('getPublishers').addEventListener('click', () => {
-    fetch('/api/superhero/publishers')
-        .then(response => {
-            if (!response.ok) {
-                console.error(`Error: ${response.status} - ${response.statusText}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.error) {
-                displaySanitizedContent(publishersResultsDiv, data.error);
-            } else {
-                data.forEach(e => {
-                    const item = document.createElement('ol');
-                    item.appendChild(document.createTextNode(`\n${e}`));
-                    publishersResultsDiv.appendChild(item);
-                });
-            }
-        })
-        .catch(error => {
-            console.error(error);
-            publishersResultsDiv.innerHTML = 'Error fetching publishers.'; // Use publishersResultsDiv
-        });
+document.getElementById('getPublishers').addEventListener('click', async () => {
+    try {
+        const response = await fetch('/api/superhero/publishers');
+        if (!response.ok) {
+            console.error(`Error: ${response.status} - ${response.statusText}`);
+            publishersResultsDiv.innerHTML = 'Error fetching publishers.';
+            return;
+        }
+
+        const data = await response.json();
+        if (data.error) {
+            displaySanitizedContent(publishersResultsDiv, data.error);
+        } else {
+            data.forEach(e => {
+                const item = document.createElement('ol');
+                item.appendChild(document.createTextNode(`\n${e}`));
+                publishersResultsDiv.appendChild(item);
+            });
+        }
+    } catch (error) {
+        console.error(error);
+        publishersResultsDiv.innerHTML = 'Error fetching publishers.';
+    }
 });
 
-document.getElementById('getSuperheroPowers').addEventListener('click', (event) => {
+document.getElementById('getSuperheroPowers').addEventListener('click', async () => {
     const superheroIdPowers = document.getElementById('superheroIdPowers').value;
     superheroPowersDiv.innerHTML = ''; // Clear previous content
-
-    // Clear the input field
-    document.getElementById('superheroIdPowers').value = '';
+    document.getElementById('superheroIdPowers').value = ''; // Clear the input field
 
     if (!superheroIdPowers) {
         superheroPowersDiv.innerHTML = 'Please enter an ID number.';
@@ -95,98 +94,117 @@ document.getElementById('getSuperheroPowers').addEventListener('click', (event) 
         return;
     }
 
-    fetch(`/api/superhero/${superheroIdPowers}/powers`)
-        .then(response => {
-            if (!response.ok) {
-                console.error(`Error: ${response.status} - ${response.statusText}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (Array.isArray(data) && data.length === 1 && typeof data[0] === 'string') {
-                displaySanitizedContent(superheroPowersDiv, data[0]);   // Display the error message
-            } else {
-                data.forEach(e => {
-                    const item = document.createElement('ul');
-                    item.appendChild(document.createTextNode(`\n${e}`));
-                    superheroPowersDiv.appendChild(item);
-                });
-            }
-        })
-        .catch(error => {
-            console.error(error);
+    try {
+        const response = await fetch(`/api/superhero/${superheroIdPowers}/powers`);
+        if (!response.ok) {
+            console.error(`Error: ${response.status} - ${response.statusText}`);
             superheroPowersDiv.innerHTML = 'An error occurred.';
-        });
+            return;
+        }
+
+        const data = await response.json();
+        if (Array.isArray(data) && data.length === 1 && typeof data[0] === 'string') {
+            displaySanitizedContent(superheroPowersDiv, data[0]);
+        } else {
+            data.forEach(e => {
+                const item = document.createElement('ul');
+                item.appendChild(document.createTextNode(`\n${e}`));
+                superheroPowersDiv.appendChild(item);
+            });
+        }
+    } catch (error) {
+        console.error(error);
+        superheroPowersDiv.innerHTML = 'An error occurred.';
+    }
 });
 
 // Create a new favorite list
-document.getElementById('createFavoriteList').addEventListener('click', () => {
+document.getElementById('createFavoriteList').addEventListener('click', async () => {
     const listName = document.getElementById('listName').value;
+    document.getElementById('listName').value = ''; // Clear the input field
 
-    // Clear the input field
-    document.getElementById('listName').value = '';
-
-    fetch('/api/superhero/lists/create', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: listName }), // Send the name in the request body
-    })
-        .then(response => response.json())
-        .then(data => {
-            alert(data.message);
-        })
-        .catch(error => {
-            console.error(error);
-            alert('Error creating the list.');
+    try {
+        const response = await fetch('/api/superhero/lists/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name: listName }),
         });
+        const data = await response.json();
+        alert(data.message);
+    } catch (error) {
+        console.error(error);
+        alert('Error creating the list.');
+    }
 });
 
 // Save superhero IDs to a favorite list
-document.getElementById('saveToFavoriteList').addEventListener('click', () => {
+document.getElementById('saveToFavoriteList').addEventListener('click', async () => {
     const listName = document.getElementById('listNameToSave').value;
-    document.getElementById('listNameToSave').value = '';   // Clear the input field
+    document.getElementById('listNameToSave').value = ''; // Clear the input field
     const superheroIDs = document.getElementById('superheroIDsToSave').value.split(',');
-    document.getElementById('superheroIDsToSave').value = '';   // Clear the input field
+    document.getElementById('superheroIDsToSave').value = ''; // Clear the input field
 
-    fetch('/api/superhero/lists/save', {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: listName, superheroIDs }),
-    })
-        .then(response => response.json())
-        .then(data => {
-            alert(data.message);
-        })
-        .catch(error => {
-            console.error(error);
-            alert('Error saving to the list.');
+    try {
+        const response = await fetch('/api/superhero/lists/save', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name: listName, superheroIDs }),
         });
+        const data = await response.json();
+        alert(data.message);
+    } catch (error) {
+        console.error(error);
+        alert('Error saving to the list.');
+    }
 });
 
+
+
+
+
+
+
+
+
+
+
 // Retrieve superhero IDs from a favorite list
-document.getElementById('retrieveFromFavoriteList').addEventListener('click', () => {
-    const listName = document.getElementById('listNameToRetrieve').value; //initialize input
-    document.getElementById('listNameToRetrieve').value = '';   // Clear the input field
+document.getElementById('retrieveFromFavoriteList').addEventListener('click', async () => {
+    const listName = document.getElementById('listNameToRetrieve').value;
+    document.getElementById('listNameToRetrieve').value = ''; // Clear the input field
+    const sortField = document.getElementById('sortOptions').value;
 
     favoriteListInfoDiv.innerHTML = ''; // Clear previous content
 
-    fetch(`/api/superhero/lists/get?name=${listName}`)
-        .then(response => {
-            if (!response.ok) {
-                console.error(`Error: ${response.status} - ${response.statusText}`);
-                throw new Error('Error retrieving the list.');
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (Array.isArray(data)) {
-                favoriteListInfoDiv.innerHTML = '<h3>Superheroes in the list:</h3>';
+    try {
+        const response = await fetch(`/api/superhero/lists/get?name=${listName}`);
+        if (!response.ok) {
+            console.error(`Error: ${response.status} - ${response.statusText}`);
+            throw new Error('Error retrieving the list.');
+        }
 
-                data.forEach(superhero => {
+        const superheroesInList = await response.json();
+        if (Array.isArray(superheroesInList)) {
+            if (sortField === 'name') {
+                superheroesInList.sort((a, b) => a.name.localeCompare(b.name));
+            } else if (sortField === 'race') {
+                superheroesInList.sort((a, b) => a.race.localeCompare(b.race));
+            } else if (sortField === 'publisher') {
+                superheroesInList.sort((a, b) => a.publisher.localeCompare(b.publisher));
+            } else if (sortField === 'power') {
+                superheroesInList.sort((a, b) => {
+                    const powersA = a.powers.join(', ').toLowerCase();
+                    const powersB = b.powers.join(', ').toLowerCase();
+                    return powersA.localeCompare(powersB);
+                });
+
+                favoriteListInfoDiv.innerHTML = `<h3>Sorted Superheroes in the list ${listName}:</h3>`;
+
+                superheroesInList.forEach(superhero => {
                     const superheroItem = document.createElement('div');
                     superheroItem.innerHTML = `<h4>ID: ${superhero.id}</h4>`;
                     superheroItem.innerHTML += `<p>${superhero.name}</p>`;
@@ -198,46 +216,57 @@ document.getElementById('retrieveFromFavoriteList').addEventListener('click', ()
                     superheroItem.innerHTML += `<p><i>${superhero.powers.join(', ')}</i></p>`;
                     favoriteListInfoDiv.appendChild(superheroItem);
                 });
-            } else if (data.error){
-                alert(data.error);
+            } 
+            else if (superheroesInList.error) {
+                alert(superheroesInList.error);
             }
-        })
-        .catch(error => {
-            console.error(error);
-            alert('Error retrieving the list.');
-        });
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Error retrieving the list.' + error.message);
+    }
 });
 
+
+
+
+
+
+
+
+
+
+
+
 // Delete a favorite list
-document.getElementById('deleteFavoriteList').addEventListener('click', () => {
+document.getElementById('deleteFavoriteList').addEventListener('click', async () => {
     const listNameToDelete = document.getElementById('listNameToDelete').value;
     document.getElementById('listNameToDelete').value = ''; // Clear the input field
 
-    fetch('/api/superhero/lists/delete', {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: listNameToDelete }), // Send the name in the request body
-    })
-        .then(response => response.json())
-        .then(data => {
-            alert(data.message);
-        })
-        .catch(error => {
-            console.error(error);
-            alert('Error deleting the list.');
+    try {
+        const response = await fetch('/api/superhero/lists/delete', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name: listNameToDelete }),
         });
+        const data = await response.json();
+        alert(data.message);
+    } catch (error) {
+        console.error(error);
+        alert('Error deleting the list.');
+    }
 });
 
-document.getElementById('searchSuperheroes').addEventListener('click', (event) => {
+document.getElementById('searchSuperheroes').addEventListener('click', async (event) => {
     event.preventDefault(); // Prevent the default form submission behavior
 
     const searchField = document.getElementById('searchField').value;
     const searchPattern = document.getElementById('searchPattern').value;
-    document.getElementById('searchPattern').value = '';    // Clear previous input
+    document.getElementById('searchPattern').value = ''; // Clear previous input
     const searchLimit = document.getElementById('searchLimit').value;
-    document.getElementById('searchLimit').value = '';  // Clear previous input
+    document.getElementById('searchLimit').value = ''; // Clear previous input
     searchResultsDiv.innerHTML = ''; // Clear previous content
 
     if (!searchField || !searchPattern) {
@@ -245,40 +274,38 @@ document.getElementById('searchSuperheroes').addEventListener('click', (event) =
         return;
     }
 
-    fetch(`/api/superhero/search?field=${searchField}&pattern=${searchPattern}&n=${searchLimit}`)
-        .then(response => {
-            if (!response.ok) {
-                console.error(`Error: ${response.status} - ${response.statusText}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.error) {
-                displaySanitizedContent(searchResultsDiv, data.error);
-            } else {
-                searchResultsDiv.innerHTML = '<h3>Superhero Info:</h3>';
-                if (Array.isArray(data)) {
+    try {
+        const response = await fetch(`/api/superhero/search?field=${searchField}&pattern=${searchPattern}&n=${searchLimit}`);
+        if (!response.ok) {
+            console.error(`Error: ${response.status} - ${response.statusText}`);
+            return;
+        }
 
-                    if(searchField === 'power'){
-                        searchResultsDiv.innerHTML = `<h3>Superhero with Power '${searchPattern}' Info:</h3>`;
+        const data = await response.json();
+        if (data.error) {
+            displaySanitizedContent(searchResultsDiv, data.error);
+        } else {
+            searchResultsDiv.innerHTML = '<h3>Superhero Info:</h3>';
+            if (Array.isArray(data)) {
+                if (searchField === 'power') {
+                    searchResultsDiv.innerHTML = `<h3>Superhero with Power '${searchPattern}' Info:</h3>`;
+                }
+
+                data.forEach(superhero => {
+                    const superheroInfoDiv = document.createElement('div');
+                    superheroInfoDiv.innerHTML = `<h4>ID: ${superhero.id}</h4>`;
+                    for (const key in superhero) {
+                        if (key !== 'id') {
+                            superheroInfoDiv.innerHTML += `<p>${key}: ${superhero[key]}</p>`;
+                        }
                     }
 
-                    data.forEach(superhero => {
-                        const superheroInfoDiv = document.createElement('div');
-                        superheroInfoDiv.innerHTML = `<h4>ID: ${superhero.id}</h4>`;
-                        for (const key in superhero) {
-                            if (key !== 'id') {
-                                superheroInfoDiv.innerHTML += `<p>${key}: ${superhero[key]}</p>`;
-                            }
-                        }
-                        
-                        searchResultsDiv.appendChild(superheroInfoDiv);
-                    });
-                }
+                    searchResultsDiv.appendChild(superheroInfoDiv);
+                });
             }
-        })
-        .catch(error => {
-            console.error(error);
-            searchResultsDiv.innerHTML = 'An error occurred.';
-        });
+        }
+    } catch (error) {
+        console.error(error);
+        searchResultsDiv.innerHTML = 'An error occurred.';
+    }
 });
