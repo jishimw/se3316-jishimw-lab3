@@ -280,10 +280,10 @@ app.delete('/api/superhero/lists/delete', (req, res) => {
 app.get('/api/superhero/search', (req, res) => {
     const field = req.query.field; // Get the search field from the query parameters
     const pattern = req.query.pattern; // Get the search pattern from the query parameters
-    const n = req.query.n; // Get the limit from the query parameters
+    const n = parseInt(req.query.n); // Get the limit from the query parameters
 
-    if (!field || !pattern) {
-        return res.status(400).json({ error: 'Both field and pattern are required' });
+    if (!field || !pattern || isNaN(n) || n <= 0) {
+        return res.status(400).json({ error: 'Invalid input parameters' });
     }
 
     const matchingSuperheroIDs = searchSuperheroes(field, pattern, n);
